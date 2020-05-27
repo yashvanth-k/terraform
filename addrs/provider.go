@@ -278,23 +278,16 @@ func ParseProviderSourceString(str string) (Provider, tfdiags.Diagnostics) {
 	if len(parts) >= 2 {
 		// the namespace is always the second-to-last part
 		givenNamespace := parts[len(parts)-2]
-		if givenNamespace == LegacyProviderNamespace {
-			// For now we're tolerating legacy provider addresses until we've
-			// finished updating the rest of the codebase to no longer use them,
-			// or else we'd get errors round-tripping through legacy subsystems.
-			ret.Namespace = LegacyProviderNamespace
-		} else {
-			namespace, err := ParseProviderPart(givenNamespace)
-			if err != nil {
-				diags = diags.Append(&hcl.Diagnostic{
-					Severity: hcl.DiagError,
-					Summary:  "Invalid provider namespace",
-					Detail:   fmt.Sprintf(`Invalid provider namespace %q in source %q: %s"`, namespace, str, err),
-				})
-				return Provider{}, diags
-			}
-			ret.Namespace = namespace
+		namespace, err := ParseProviderPart(givenNamespace)
+		if err != nil {
+			diags = diags.Append(&hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  "Invalid provider namespace",
+				Detail:   fmt.Sprintf(`Invalid provider namespace %q in source %q: %s"`, givenNamespace, str, err),
+			})
+			return Provider{}, diags
 		}
+		ret.Namespace = namespace
 	}
 
 	// Final Case: 3 parts
@@ -310,18 +303,6 @@ func ParseProviderSourceString(str string) (Provider, tfdiags.Diagnostics) {
 			return Provider{}, diags
 		}
 		ret.Hostname = hn
-	}
-
-	if ret.Namespace == LegacyProviderNamespace && ret.Hostname != DefaultRegistryHost {
-		// Legacy provider addresses must always be on the default registry
-		// host, because the default registry host decides what actual FQN
-		// each one maps to.
-		diags = diags.Append(&hcl.Diagnostic{
-			Severity: hcl.DiagError,
-			Summary:  "Invalid provider namespace",
-			Detail:   "The legacy provider namespace \"-\" can be used only with hostname " + DefaultRegistryHost.ForDisplay() + ".",
-		})
-		return Provider{}, diags
 	}
 
 	return ret, diags

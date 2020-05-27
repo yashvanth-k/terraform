@@ -379,6 +379,10 @@ func TestParseProviderSourceStr(t *testing.T) {
 			Provider{},
 			true,
 		},
+		"registry.terraform.io/-/legacy": {
+			Provider{},
+			true,
+		},
 	}
 
 	for name, test := range tests {

@@ -12,7 +12,7 @@ func TestLookupLegacyProvider(t *testing.T) {
 	defer close()
 
 	got, err := LookupLegacyProvider(
-		addrs.NewLegacyProvider("legacy"),
+		addrs.NewDefaultProvider("legacy"),
 		source,
 	)
 	if err != nil {
@@ -34,7 +34,7 @@ func TestLookupLegacyProvider_invalidResponse(t *testing.T) {
 	defer close()
 
 	got, err := LookupLegacyProvider(
-		addrs.NewLegacyProvider("invalid"),
+		addrs.NewDefaultProvider("invalid"),
 		source,
 	)
 	if !got.IsZero() {
@@ -51,7 +51,7 @@ func TestLookupLegacyProvider_unexpectedTypeChange(t *testing.T) {
 	defer close()
 
 	got, err := LookupLegacyProvider(
-		addrs.NewLegacyProvider("changetype"),
+		addrs.NewDefaultProvider("changetype"),
 		source,
 	)
 	if !got.IsZero() {

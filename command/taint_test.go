@@ -25,7 +25,7 @@ func TestTaint(t *testing.T) {
 				Status:    states.ObjectReady,
 			},
 			addrs.AbsProviderConfig{
-				Provider: addrs.NewLegacyProvider("test"),
+				Provider: addrs.NewDefaultProvider("test"),
 				Module:   addrs.RootModule,
 			},
 		)
@@ -63,7 +63,7 @@ func TestTaint_lockedState(t *testing.T) {
 				Status:    states.ObjectReady,
 			},
 			addrs.AbsProviderConfig{
-				Provider: addrs.NewLegacyProvider("test"),
+				Provider: addrs.NewDefaultProvider("test"),
 				Module:   addrs.RootModule,
 			},
 		)
@@ -252,7 +252,7 @@ func TestTaint_missing(t *testing.T) {
 				Status:    states.ObjectReady,
 			},
 			addrs.AbsProviderConfig{
-				Provider: addrs.NewLegacyProvider("test"),
+				Provider: addrs.NewDefaultProvider("test"),
 				Module:   addrs.RootModule,
 			},
 		)
@@ -288,7 +288,7 @@ func TestTaint_missingAllow(t *testing.T) {
 				Status:    states.ObjectReady,
 			},
 			addrs.AbsProviderConfig{
-				Provider: addrs.NewLegacyProvider("test"),
+				Provider: addrs.NewDefaultProvider("test"),
 				Module:   addrs.RootModule,
 			},
 		)
@@ -367,7 +367,7 @@ func TestTaint_module(t *testing.T) {
 				Status:    states.ObjectReady,
 			},
 			addrs.AbsProviderConfig{
-				Provider: addrs.NewLegacyProvider("test"),
+				Provider: addrs.NewDefaultProvider("test"),
 				Module:   addrs.RootModule,
 			},
 		)
@@ -382,7 +382,7 @@ func TestTaint_module(t *testing.T) {
 				Status:    states.ObjectReady,
 			},
 			addrs.AbsProviderConfig{
-				Provider: addrs.NewLegacyProvider("test"),
+				Provider: addrs.NewDefaultProvider("test"),
 				Module:   addrs.RootModule,
 			},
 		)
@@ -410,22 +410,22 @@ func TestTaint_module(t *testing.T) {
 const testTaintStr = `
 test_instance.foo: (tainted)
   ID = bar
-  provider = provider["registry.terraform.io/-/test"]
+  provider = provider["registry.terraform.io/hashicorp/test"]
 `
 
 const testTaintDefaultStr = `
 test_instance.foo:
   ID = bar
-  provider = provider["registry.terraform.io/-/test"]
+  provider = provider["registry.terraform.io/hashicorp/test"]
 `
 
 const testTaintModuleStr = `
 test_instance.foo:
   ID = bar
-  provider = provider["registry.terraform.io/-/test"]
+  provider = provider["registry.terraform.io/hashicorp/test"]
 
 module.child:
   test_instance.blah: (tainted)
     ID = blah
-    provider = provider["registry.terraform.io/-/test"]
+    provider = provider["registry.terraform.io/hashicorp/test"]
 `

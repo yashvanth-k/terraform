@@ -55,7 +55,7 @@ func TestStateReplaceProvider(t *testing.T) {
 				Status:    states.ObjectReady,
 			},
 			addrs.AbsProviderConfig{
-				Provider: addrs.NewLegacyProvider("azurerm"),
+				Provider: addrs.NewDefaultProvider("azurerm"),
 				Module:   addrs.RootModule,
 			},
 		)
@@ -293,7 +293,7 @@ aws_instance.beta:
   foo = value
 azurerm_virtual_machine.gamma:
   ID = gamma
-  provider = provider["registry.terraform.io/-/azurerm"]
+  provider = provider["registry.terraform.io/hashicorp/azurerm"]
   baz = value
 `
 
@@ -310,6 +310,6 @@ aws_instance.beta:
   foo = value
 azurerm_virtual_machine.gamma:
   ID = gamma
-  provider = provider["registry.terraform.io/-/azurerm"]
+  provider = provider["registry.terraform.io/hashicorp/azurerm"]
   baz = value
 `
