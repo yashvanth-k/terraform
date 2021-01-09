@@ -602,6 +602,17 @@ func TestFunctions(t *testing.T) {
 			},
 		},
 
+		"one": {
+			{
+				`one([])`,
+				cty.NullVal(cty.DynamicPseudoType),
+			},
+			{
+				`one([true])`,
+				cty.True,
+			},
+		},
+
 		"parseint": {
 			{
 				`parseint("100", 10)`,
