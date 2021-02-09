@@ -2,6 +2,7 @@ package moduletest
 
 import (
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/zclconf/go-cty/cty"
@@ -67,6 +68,26 @@ func (p *Provider) TestResults() map[string]*Component {
 	return p.components
 }
 
+// Reset returns the recieving provider back to its original state, with no
+// recorded test results.
+//
+// It additionally detaches the instance from any data structure previously
+// returned by method TestResults, freeing the caller from the constraints
+// in its documentation about mutability and storage.
+//
+// For convenience in the presumed common case of resetting as part of
+// capturing the results for storage, this method also returns the result
+// that method TestResults would've returned if called prior to the call
+// to Reset.
+func (p *Provider) Reset() map[string]*Component {
+	p.mutex.Lock()
+	log.Print("[TRACE] moduletest.Provider: Reset")
+	ret := p.components
+	p.components = make(map[string]*Component)
+	p.mutex.Unlock()
+	return ret
+}
+
 // GetSchema returns the complete schema for the provider.
 func (p *Provider) GetSchema() providers.GetSchemaResponse {
 	return providers.GetSchemaResponse{
@@ -101,6 +122,8 @@ func (p *Provider) Configure(providers.ConfigureRequest) providers.ConfigureResp
 
 // ValidateResourceTypeConfig is used to validate configuration values for a resource.
 func (p *Provider) ValidateResourceTypeConfig(req providers.ValidateResourceTypeConfigRequest) providers.ValidateResourceTypeConfigResponse {
+	log.Print("[TRACE] moduletest.Provider: ValidateResourceTypeConfig")
+
 	var res providers.ValidateResourceTypeConfigResponse
 	if req.TypeName != "test_assertions" { // we only have one resource type
 		res.Diagnostics = res.Diagnostics.Append(fmt.Errorf("unsupported resource type %s", req.TypeName))
@@ -168,6 +191,8 @@ func (p *Provider) ValidateResourceTypeConfig(req providers.ValidateResourceType
 
 // ReadResource refreshes a resource and returns its current state.
 func (p *Provider) ReadResource(req providers.ReadResourceRequest) providers.ReadResourceResponse {
+	log.Print("[TRACE] moduletest.Provider: ReadResource")
+
 	var res providers.ReadResourceResponse
 	if req.TypeName != "test_assertions" { // we only have one resource type
 		res.Diagnostics = res.Diagnostics.Append(fmt.Errorf("unsupported resource type %s", req.TypeName))
@@ -183,6 +208,8 @@ func (p *Provider) ReadResource(req providers.ReadResourceRequest) providers.Rea
 // stored in the state in case the schema has changed since it was originally
 // written.
 func (p *Provider) UpgradeResourceState(req providers.UpgradeResourceStateRequest) providers.UpgradeResourceStateResponse {
+	log.Print("[TRACE] moduletest.Provider: UpgradeResourceState")
+
 	var res providers.UpgradeResourceStateResponse
 	if req.TypeName != "test_assertions" { // we only have one resource type
 		res.Diagnostics = res.Diagnostics.Append(fmt.Errorf("unsupported resource type %s", req.TypeName))
@@ -215,6 +242,8 @@ func (p *Provider) UpgradeResourceState(req providers.UpgradeResourceStateReques
 // PlanResourceChange takes the current state and proposed state of a
 // resource, and returns the planned final state.
 func (p *Provider) PlanResourceChange(req providers.PlanResourceChangeRequest) providers.PlanResourceChangeResponse {
+	log.Print("[TRACE] moduletest.Provider: PlanResourceChange")
+
 	var res providers.PlanResourceChangeResponse
 	if req.TypeName != "test_assertions" { // we only have one resource type
 		res.Diagnostics = res.Diagnostics.Append(fmt.Errorf("unsupported resource type %s", req.TypeName))
@@ -239,15 +268,25 @@ func (p *Provider) PlanResourceChange(req providers.PlanResourceChangeRequest) p
 	componentName := proposed.GetAttr("component").AsString() // proven known during validate
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
-	if _, exists := p.components[componentName]; exists {
-		res.Diagnostics = res.Diagnostics.Append(tfdiags.AttributeValue(
-			tfdiags.Error,
-			"Duplicate test component",
-			fmt.Sprintf("Another test_assertions resource already declared assertions for the component name %q.", componentName),
-			cty.GetAttrPath("component"),
-		))
-		return res
-	}
+	// NOTE: Ideally we'd do something here to verify if two assertions
+	// resources in the configuration attempt to declare the same component,
+	// but we can't actually do that because Terraform calls PlanResourceChange
+	// during both plan and apply, and so the second one would always fail.
+	// Since this is just providing a temporary pseudo-syntax for writing tests
+	// anyway, we'll live with this for now and aim to solve it with a future
+	// iteration of testing that's better integrated into the Terraform
+	// language.
+	/*
+		if _, exists := p.components[componentName]; exists {
+			res.Diagnostics = res.Diagnostics.Append(tfdiags.AttributeValue(
+				tfdiags.Error,
+				"Duplicate test component",
+				fmt.Sprintf("Another test_assertions resource already declared assertions for the component name %q.", componentName),
+				cty.GetAttrPath("component"),
+			))
+			return res
+		}
+	*/
 
 	component := Component{
 		Assertions: make(map[string]*Assertion),
@@ -328,6 +367,8 @@ func (p *Provider) PlanResourceChange(req providers.PlanResourceChangeRequest) p
 // yet contain unknown computed values, and applies the changes returning
 // the final state.
 func (p *Provider) ApplyResourceChange(req providers.ApplyResourceChangeRequest) providers.ApplyResourceChangeResponse {
+	log.Print("[TRACE] moduletest.Provider: ApplyResourceChange")
+
 	var res providers.ApplyResourceChangeResponse
 	if req.TypeName != "test_assertions" { // we only have one resource type
 		res.Diagnostics = res.Diagnostics.Append(fmt.Errorf("unsupported resource type %s", req.TypeName))
@@ -343,6 +384,11 @@ func (p *Provider) ApplyResourceChange(req providers.ApplyResourceChangeRequest)
 
 	planned := req.PlannedState
 	res.NewState = planned
+	if res.NewState.IsNull() {
+		// If we're destroying then we'll just quickly return success to
+		// allow the test process to clean up after itself.
+		return res
+	}
 	componentName := planned.GetAttr("component").AsString() // proven known during validate
 
 	p.mutex.Lock()

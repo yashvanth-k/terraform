@@ -47,6 +47,8 @@ type AssertionKey struct {
 // Status is an enumeration of possible outcomes of a test assertion.
 type Status rune
 
+//go:generate go run golang.org/x/tools/cmd/stringer -type=Status assertion.go
+
 const (
 	// Pending indicates that the test was registered (during planning)
 	// but didn't register an outcome during apply, perhaps due to being
