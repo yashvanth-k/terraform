@@ -328,18 +328,6 @@ func initCommands(
 		// Plumbing
 		//-----------------------------------------------------------
 
-		"0.12upgrade": func() (cli.Command, error) {
-			return &command.ZeroTwelveUpgradeCommand{
-				Meta: meta,
-			}, nil
-		},
-
-		"0.13upgrade": func() (cli.Command, error) {
-			return &command.ZeroThirteenUpgradeCommand{
-				Meta: meta,
-			}, nil
-		},
-
 		"force-unlock": func() (cli.Command, error) {
 			return &command.UnlockCommand{
 				Meta: meta,
